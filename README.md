@@ -61,27 +61,6 @@ Each variable appears on its own line for real-time plotting.
 
 ---
 
-## 🖥 Python Serial Logger
-
-Example Python script to run on the Raspberry Pi:
-
-```python
-import serial
-import time
-
-with serial.Serial('/dev/ttyUSB0', 115200, timeout=1) as ser:
-    with open("sensor_log.tsv", "a") as log_file:
-        while True:
-            line = ser.readline().decode('utf-8').strip()
-            print(line)
-            log_file.write(line + "\n")
-            log_file.flush()
-```
-
-> 🔧 Adjust `/dev/ttyUSB0` if needed (e.g., `COM3` on Windows).
-
----
-
 ## 📊 Visualization
 
 - Use `Arduino Serial Plotter` for quick feedback.
