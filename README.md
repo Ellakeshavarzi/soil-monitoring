@@ -1,87 +1,128 @@
-# Soil Monitoring System
+# 🌱 Soil Monitoring System with ESP32
 
-**An experimental platform for collecting and visualizing real-time soil moisture, temperature, humidity, and light data using ESP32 microcontrollers.**
-
----
-
-## 📡 Overview
-
-This project uses two ESP32-S3 boards to collect environmental data from soil sensors and I2C modules, and transmits the data via UART for unified logging and visualization.
-
-- **Board A:** Reads from 2 SMT50 sensors, a BH1750 light sensor, and an Si7021 humidity/temperature sensor. It also receives data from Board B.
-- **Board B:** Reads from 2 additional SMT50 sensors and sends the data over Serial to Board A.
-- Data is sent over Serial to a Raspberry Pi or laptop for logging and plotting.
+This project is a real-time **soil, temperature, humidity, and light monitoring system** using two ESP32 boards (Board A and Board B), multiple sensors, and serial communication.
 
 ---
 
-## 🛠 Hardware Setup
+## 📦 Components
 
-### Sensors:
-- 3x **SMT50** Soil Moisture + Temperature sensors
-- 1x **BH1750** Light sensor (I2C)
-- 1x **Si7021** Humidity + Temperature sensor (I2C)
-
-### Boards:
-- 2x **ESP32-S3-WROOM-1**
-- 1x **Raspberry Pi (or any computer)** for logging
-
----
-
-## 🧰 Software Components
-
-- **Arduino IDE** for ESP32 code
-- **Python script** (via `pyserial`) for data logging on Raspberry Pi or laptop
-- **Arduino Serial Plotter** (optional, for real-time visualization)
+- 2 × ESP32-S3 boards (Board A & Board B)
+- 4 × SMT50 Soil Moisture & Temperature sensors
+- 1 × BH1750 Light sensor (I2C)
+- 1 × Si7021 Humidity & Temperature sensor (I2C)
+- Jumper wires
+- Breadboards
+- Optional: Raspberry Pi (for logging)
 
 ---
 
-## 🔌 Wiring
+## 🔌 Wiring Instructions
 
-- **Board A**
-  - I2C1: BH1750 — `SDA=8`, `SCL=9`
-  - I2C2: Si7021 — `SDA=10`, `SCL=11`
-  - UART: RXD=16 (receives from Board B's TX)
-  - SMT50 sensors on analog pins: 4, 14 (moisture); 6, 15 (temperature)
+### 🔗 Board A ↔ Board B Connections
 
-- **Board B**
-  - SMT50 sensors on analog pins: 14, 16 (moisture); 15, 17 (temperature)
-  - UART TX connected to Board A RXD
+| Purpose               | Board A Pin       | Board B Pin       | Description                                |
+|-----------------------|-------------------|--------------------|--------------------------------------------|
+| UART Receive (RXD2)   | `GPIO 16`         | `TX (GPIO 21)`     | For receiving serial data from Board B     |
+| Ground                | `GND`             | `GND`              | Shared ground (must be connected)          |
+
+> ⚠️ **TX from Board A is not used** in this setup.
 
 ---
 
-## 🧪 Data Format
+### 🧪 Sensor Pin Assignments
 
-Each 10 seconds, Board A sends the following tab-separated values over Serial:
+#### 📍 Board A (Main Logger)
+
+| Sensor                     | Signal     | ESP32 Pin |
+|----------------------------|------------|-----------|
+| SMT50 #1 (Soil + Temp)     | Moisture   | GPIO 4    |
+|                            | Temp       | GPIO 6    |
+| SMT50 #2 (Soil + Temp)     | Moisture   | GPIO 14   |
+|                            | Temp       | GPIO 15   |
+| BH1750 (Light)             | SDA        | GPIO 8    |
+|                            | SCL        | GPIO 9    |
+| Si7021 (Humidity + Temp)   | SDA        | GPIO 10   |
+|                            | SCL        | GPIO 11   |
+| Serial Input               | RX         | GPIO 16   |
+
+#### 📍 Board B (Sensor Transmitter)
+
+| Sensor                     | Signal     | ESP32 Pin |
+|----------------------------|------------|-----------|
+| SMT50 #3 (Soil + Temp)     | Moisture   | GPIO 14   |
+|                            | Temp       | GPIO 15   |
+| SMT50 #4 (Soil + Temp)     | Moisture   | GPIO 16   |
+|                            | Temp       | GPIO 17   |
+| Serial Output              | TX         | GPIO 21   |
+
+---
+
+## 🚀 Setup Instructions
+
+### 1. Flash Arduino Code
+
+- Flash `boardA.ino` to Board A
+- Flash `boardB.ino` to Board B
+- Make sure Board B is powered and transmitting before Board A starts reading
+
+### 2. Start Serial Logging (Python)
+
+Use the provided Python script (`data_import.py`) to log sensor readings to CSV:
+
+```bash
+python data_import.py
+```
+
+This script:
+- Reads data from COM port (e.g. COM5)
+- Writes to a timestamped `.csv` file
+- Prints logs with timestamps
+
+### 3. Visualize Data
+
+Use the `data_visualize.py` script to create line plots of selected features:
+
+```bash
+python data_visualize.py
+```
+---
+
+## 📝 File Structure
 
 ```
-BoardA_Moisture_1    BoardA_Temp_1    BoardA_Moisture_2    BoardA_Temp_2    Light_Lux    Si7021_Temp    Si7021_Humidity    BoardB_Moisture_1    BoardB_Temp_1    BoardB_Moisture_2    BoardB_Temp_2
+soil-monitoring/
+│
+├── boardA.ino           # Main board code
+├── boardB.ino           # Secondary board sensor broadcaster
+├── data_import.py        # Python script to save data to CSV
+├── plot_data.py          # Visualizes sensor data
+└── README.md             # This documentation
 ```
 
-Each variable appears on its own line for real-time plotting.
+---
+
+## 🛠️ Notes
+
+- Ensure that **only one program accesses the COM port at a time**.
+- Start Board B first so that Board A can receive sensor data.
+- You can optionally attach a Raspberry Pi to run the Python logging and store data long-term.
 
 ---
 
-## 📊 Visualization
+## 📈 Sample Output
 
-- Use `Arduino Serial Plotter` for quick feedback.
-- Data can be imported into tools like **Excel**, **Google Sheets**, or **Python (pandas/matplotlib)** for deeper analysis.
+CSV data columns:
+```
+timestamp, BoardA_Moisture_1, BoardA_Temp_1, BoardA_Moisture_2, BoardA_Temp_2, Light_Lux, Si7021_Temp, Si7021_Humidity, BoardB_Moisture_1, BoardB_Temp_1, BoardB_Moisture_2, BoardB_Temp_2
+```
 
----
-
-## 🔄 Future Work
-
-- Add support for wireless transmission (e.g., WiFi + MQTT or Bluetooth)
-- Automate irrigation based on threshold values
-- Design a web-based live dashboard
-
----
-
-## 🧑‍💻 Authors
-
-Developed by Jasper Antonius Vollmert, Elaheh Keshavarzikhoozani, and Adel Alatassi. Contributions welcome!
+Example:
+```
+2025-06-07 15:01:22, 1.25, 23.6, 0.94, 24.1, 0.00, 22.5, 60.1, 1.10, 23.8, 1.03, 24.3
+```
 
 ---
 
-## 📄 License
+## 📧 License
 
-MIT License — feel free to use and modify with attribution.
+MIT License  
