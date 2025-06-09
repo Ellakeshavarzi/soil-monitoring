@@ -39,5 +39,5 @@ void loop() {
     Serial2.println("%");
   }
 
-  delay(2000);  // Send every 10 seconds
+  delay(10000);  // Send every 10 seconds
 }
