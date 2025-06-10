@@ -143,7 +143,7 @@ void loop() {
   Serial.print("BoardB_Moisture_2:"); Serial.print(boardB_moisture2); Serial.print(" ");
   Serial.print("BoardB_Temp_2:");     Serial.println(boardB_temp2);
 
-  delay(2000);
+  delay(10000);
 }
 
 // Helper functions
